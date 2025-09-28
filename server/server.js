@@ -15,16 +15,27 @@ const notificationRoutes = require('./routes/notifications');
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO setup with CORS for Vite (port 5173)
+// CORS configuration - allow your Vercel domain
+const corsOptions = {
+  origin: [
+    "http://localhost:3000", 
+    "http://localhost:5173",
+    "https://campus-hub2-0-atcenjzi3-francis-aukas-projects.vercel.app", // ✅ Your actual Vercel URL
+    "https://campus-hub2-0.vercel.app", // In case Vercel gives you a shorter URL later
+    process.env.FRONTEND_URL // You can also set this as an environment variable
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+// Socket.IO setup with updated CORS
 const io = socketIo(server, {
-  cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173"],
-    methods: ["GET", "POST"]
-  }
+  cors: corsOptions
 });
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Make io available to routes
@@ -36,8 +47,32 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Root endpoint
 app.get('/', (req, res) => {
   res.json({ message: 'Campus Hub API is running!' });
+});
+
+// Test endpoint to verify API routes work
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Campus Hub API routes are working!',
+    timestamp: new Date().toISOString(),
+    availableRoutes: [
+      'POST /api/auth/login',
+      'POST /api/auth/register',
+      'GET /api/tasks',
+      'GET /api/notifications'
+    ]
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // Enhanced Socket.IO connection handling with authentication
