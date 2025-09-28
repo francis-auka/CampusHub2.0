@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// TEMPORARY: Hardcode production URL for testing
+// CORRECT: Backend does use /api prefix based on server.js
 const API_URL = 'https://campushub2-0-kwrg.onrender.com/api';
-console.log('🌐 Hardcoded API URL:', API_URL);
+
+// Debug logs to verify
+console.log('🚨 CAMPUS HUB API DEBUG');
+console.log('🌐 API URL:', API_URL);
+console.log('🌍 Current hostname:', window.location.hostname);
+console.log('📍 Frontend URL:', window.location.href);
 
 // Create axios instance
 const api = axios.create({
@@ -10,7 +15,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000 // Add timeout for better error handling
+  timeout: 15000
 });
 
 // Add token to requests if available
@@ -19,31 +24,34 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log('📤 Request:', config.method?.toUpperCase(), config.baseURL + config.url);
+  console.log('📤 Making request to:', config.baseURL + config.url);
   return config;
 });
 
 // Enhanced error handling interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log('📥 Response:', response.status, response.config.method?.toUpperCase(), response.config.url);
+    console.log('✅ Success:', response.status, response.config.url);
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
+    console.error('❌ API Error Details:', {
       status: error.response?.status,
+      statusText: error.response?.statusText,
       message: error.response?.data?.message || error.message,
       url: error.config?.url,
       method: error.config?.method,
-      baseURL: error.config?.baseURL
+      baseURL: error.config?.baseURL,
+      fullUrl: error.config?.baseURL + error.config?.url
     });
     return Promise.reject(error);
   }
 );
 
-// Rest of your code remains the same...
+// Auth services
 export const authService = {
   register: async (userData) => {
+    console.log('🔐 Attempting registration...');
     const response = await api.post('/auth/register', userData);
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
@@ -53,6 +61,7 @@ export const authService = {
   },
 
   login: async (credentials) => {
+    console.log('🔐 Attempting login...');
     const response = await api.post('/auth/login', credentials);
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
@@ -170,7 +179,6 @@ export const taskService = {
     return response.data;
   },
 
-  // New: Get user statistics
   getStats: async () => {
     try {
       const response = await api.get('/tasks/stats/summary');
@@ -188,7 +196,7 @@ export const taskService = {
   }
 };
 
-// NEW: Notification services
+// Notification services
 export const notificationService = {
   getAllNotifications: async () => {
     const response = await api.get('/notifications');
