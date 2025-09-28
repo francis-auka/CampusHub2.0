@@ -1,14 +1,17 @@
 import axios from 'axios';
 
 // Use environment variable for API URL, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'https://campushub2-0-kwrg.onrender.com/';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+console.log('🌐 API URL:', API_URL); // Debug log to verify the URL
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 10000 // Add timeout for better error handling
 });
 
 // Add token to requests if available
@@ -17,24 +20,29 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('📤 Request:', config.method?.toUpperCase(), config.baseURL + config.url);
   return config;
 });
 
 // Enhanced error handling interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('📥 Response:', response.status, response.config.method?.toUpperCase(), response.config.url);
+    return response;
+  },
   (error) => {
-    console.error('API Error:', {
+    console.error('❌ API Error:', {
       status: error.response?.status,
-      message: error.response?.data?.message,
+      message: error.response?.data?.message || error.message,
       url: error.config?.url,
-      method: error.config?.method
+      method: error.config?.method,
+      baseURL: error.config?.baseURL
     });
     return Promise.reject(error);
   }
 );
 
-// Auth services
+// Rest of your code remains the same...
 export const authService = {
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
@@ -130,7 +138,7 @@ export const taskService = {
   payTask: async (taskId) => {
     try {
       console.log('📄 Processing payment for task:', taskId);
-      
+
       // Check if we have a token
       const token = localStorage.getItem('token');
       if (!token) {
@@ -142,7 +150,7 @@ export const taskService = {
       return response.data;
     } catch (error) {
       console.error('❌ Payment failed:', error.response?.data || error.message);
-      
+
       // Provide specific error messages based on status
       if (error.response?.status === 401) {
         throw new Error('Authentication failed. Please log in again.');
