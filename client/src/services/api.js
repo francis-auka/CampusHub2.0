@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-console.log('🌐 API URL:', API_URL); // Debug log to verify the URL
+// TEMPORARY: Hardcode production URL for testing
+const API_URL = 'https://campushub2-0-kwrg.onrender.com/api';
+console.log('🌐 Hardcoded API URL:', API_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -138,7 +137,7 @@ export const taskService = {
   payTask: async (taskId) => {
     try {
       console.log('📄 Processing payment for task:', taskId);
-
+      
       // Check if we have a token
       const token = localStorage.getItem('token');
       if (!token) {
@@ -150,7 +149,7 @@ export const taskService = {
       return response.data;
     } catch (error) {
       console.error('❌ Payment failed:', error.response?.data || error.message);
-
+      
       // Provide specific error messages based on status
       if (error.response?.status === 401) {
         throw new Error('Authentication failed. Please log in again.');
